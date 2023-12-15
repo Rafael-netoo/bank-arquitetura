@@ -26,7 +26,7 @@
 	.globl strcpy, memcpy, strcmp, strncmp, strcat
 
 	# caso deseje testar todas as funções rapidamente basta trocar o numero abaixo indo de 1 a 5
-	li $s0, 1 #indica qual função sera testada
+	li $s0, 3 #indica qual função sera testada
 
 	beq $s0, 1, teste_strcpy #strcpy
 	beq $s0, 2, teste_memcpy #memcpy
@@ -64,9 +64,9 @@
 		j end
 	
 	teste_strncmp:
-		la $a0 strncmp1
-		la $a1 strncmp2
-		lw $a2 strncmp_num
+		la $a0, strncmp1
+		la $a1, strncmp2
+		lw $a2, strncmp_num
 		jal strncmp
 		move $a0, $v0
 		li $v0,1
@@ -84,34 +84,35 @@
 	
 	
 
-	strcpy:	#função que copia uma string
-		move $t0, $a0 #tirando os endereços das registradores de parametro e colocando em registradores temporarios
+	strcpy:	# função que copia uma string
+		# movendo params para os regs temporarios
+		move $t0, $a0 
 		move $t1, $a1
-		move $v0, $t0 #salvando o endereço destino para retornar no final da função
+		move $v0, $t0 # salvando o endereço destino para retornar no final da função
 		loop:
-			lb $t2, ($t1) #carrega 1 bit da memoria em $t2 da string origem
-			beqz $t2, exit #compara $t2 com zero para saber se ja chegou ao fim da string
-			sb $t2, ($t0) #guarda na memoria destino o bit em $t2
-			addi $t0, $t0, 1 #incrementa o endereço de memoria
+			lb $t2, ($t1) # carrega 1 bit da memoria em $t2 da string origem
+			beqz $t2, exit # compara $t2 com zero para saber se ja chegou ao fim da string
+			sb $t2, ($t0) # guarda na memoria destino o bit em $t2
+			addi $t0, $t0, 1 # incrementa o endereço de memoria
 			addi $t1, $t1, 1
 			j loop
 		exit:
-			sb $zero, 1($t0) #adiciona o zero ao final da string
+			sb $zero, 1($t0) # adiciona o zero ao final da string
 			jr $ra
 	
-###################################################################################################################################################
 	
 	memcpy:	
-		move $t0, $a0 #tirando os dados dos registradores de parametros e colocando em registradores temporarios
+		# movendo params para os regs temporarios
+		move $t0, $a0
 		move $t1, $a1
 		move $t2, $a2
 		move $v0, $a0
-		li $t3, 0 #contador que sera usado para saber quando parar
+		li $t3, 0 # contador que sera usado para saber quando parar
 		loop1:
-			beq $t3, $t2, exit1 #ve se o contador chegou ao numero especificado
-			lb $t4, ($t1) #carrega o bit em $t4
-			sb $t4, ($t0) #salva o bit na memoria
-			addi $t0, $t0, 1 #icrementa os endereços de memoria e o contador
+			beq $t3, $t2, exit1 # ve se o contador chegou ao numero especificado
+			lb $t4, ($t1) # carrega o bit em $t4
+			sb $t4, ($t0) # salva o bit na memoria
+			addi $t0, $t0, 1 # icrementa os endereços de memoria e o contador
 			addi $t1, $t1, 1
 			addi $t3, $t3, 1
 			j loop1
@@ -119,60 +120,63 @@
 		exit1:
 			jr $ra
 		
-###################################################################################################################################################
 
 	strcmp:
-		move $t0, $a0 #tirando os dados dos registradores de parametros e colocando em registradores temporarios
-		move $t1, $a1
+		# movendo params para os regs temporarios
+		move $t0, $a0 # $t0 = $a0
+		move $t1, $a1 # $t1 = $a1
 		loop2:
-			lb $t2, ($t0) #carregando os bits
+			lb $t2, ($t0) # carregando os bits
 			lb $t3, ($t1)
-			beqz $t2, exit2 #verificando se chegou ao final da string em ambas as strings
+			beqz $t2, exit2 # verificando se chegou ao final da string em ambas as strings
 			beqz $t3, exit2
-			bne $t2, $t3, exit2 #verifica se eles são diferentes
-			addi $t0, $t0, 1 #incrementa os endereços de memoria
+			bne $t2, $t3, exit2 # verifica se eles são diferentes
+			addi $t0, $t0, 1 # incrementa os endereços de memoria
 			addi $t1, $t1, 1
 			j loop2
 		
 		exit2:
-		blt $t2, $t3, primeiromenor #verifica qual dos 3 casos aconteceu
+		blt $t2, $t3, primeiromenor # verifica qual dos 3 casos aconteceu
 		beq $t2, $t3, iguais
 		bgt $t2, $t3, primeiromaior
 	
 	
-		primeiromenor:
+		# valor decimal menor
+		primeiromenor: 
 		li $v0, -1
 		jr $ra
 	
+		# conteúdo igual
 		iguais:
 		li $v0, 0
 		jr $ra
 	
+		# primeiro caractere diferente
 		primeiromaior:
 		li $v0, 1
 		jr $ra
 
-########################################################################################
 
 	strncmp:
-		move $t0, $a0 #tirando os dados dos registradores de parametros e colocando em registradores temporarios
+		# movendo params para os regs temporarios
+		move $t0, $a0
 		move $t1, $a1
 		move $t6, $a2 
-		li $t7, 1 #criando o contador
+		li $t7, 1 # criando o contador
 		loop3:
-			lb $t2, ($t0) #carregando os bits
+			lb $t2, ($t0) # carregando os bits
 			lb $t3, ($t1)
 			beq $t6, $t7, exit3
-			beqz $t2, exit3 #verificando se chegou ao final da string em ambas as strings
+			beqz $t2, exit3 # verificando se chegou ao final da string em ambas as strings
 			beqz $t3, exit3
-			bne $t2, $t3, exit3 #verifica se eles são diferentes
-			addi $t0, $t0, 1 #incrementa os endereços de memoria
+			bne $t2, $t3, exit3 # verifica se eles são diferentes
+			addi $t0, $t0, 1 # incrementa os endereços de memoria
 			addi $t1, $t1, 1
-			addi $t7, $t7, 1 #incrementa o contador
+			addi $t7, $t7, 1 # incrementa o contador
 			j loop3
 		
 		exit3:
-		blt $t2, $t3, primeiromenor1 #verifica qual dos 3 casos aconteceu
+		blt $t2, $t3, primeiromenor1 # verifica qual dos 3 casos aconteceu
 		beq $t2, $t3, iguais1
 		bgt $t2, $t3, primeiromaior1
 		
@@ -189,29 +193,30 @@
 		li $v0, 1
 		jr $ra	
 	
-#################################################################################################
 
 	strcat:
-		move $t0, $a0 #tirando os dados dos registradores de parametros e colocando em registradores temporarios
+		# movendo params para os regs temporarios
+		move $t0, $a0 
 		move $t1, $a1
 		move $v0, $a0
+		
 		loop4:
-			lb $t2, ($t0) #carregando um bit em $t2
-			beqz $t2, loop5 #verificando se a primeira string chegou ao final
-			addi $t0, $t0, 1 #incrementando o endereço base da string
+			lb $t2, ($t0) # carregando um bit em $t2
+			beqz $t2, loop5 # verificando se a primeira string chegou ao final
+			addi $t0, $t0, 1 # incrementando o endereço base da string
 			j loop4
 	
 		loop5:
-			lb $t2, ($t1) #carrega um bit em t2
-			beqz $t2, exit4 #verifica se a string chegou ao final
-			sb $t2, ($t0) #salva o bit de $t2 concatenando com a primeira string
-			addi $t0, $t0, 1 #incrementa o endereço base das strings
+			lb $t2, ($t1) # carrega um bit em t2
+			beqz $t2, exit4 # verifica se a string chegou ao final
+			sb $t2, ($t0) # salva o bit de $t2 concatenando com a primeira string
+			addi $t0, $t0, 1 # incrementa o endereço base das strings
 			addi $t1, $t1, 1
 			j loop5
 		
 		exit4:
 			li $t5, 0
-			sb $t5, ($t0) #adiciona o 0 ao final da string
+			sb $t5, ($t0) # adiciona o 0 ao final da string
 			jr $ra
 	
 	end:
