@@ -10,6 +10,8 @@
 	# limite = 6 bytes (com centavos)
 	# fatura = 6 bytes (com centavos)
 	
+	num_clientes: .space 50  # ou o número desejado de clientes
+	
 	nome_cliente:
 		.space 2500 # valor para armazenar 50 nomes
 		.asciiz "CLIENT BANCO ARQUITETURA"
@@ -19,7 +21,10 @@
 		.asciiz "12345678910"
 	
 	limite_cliente: .space 400 # optei por escolher 8 bytes para cada cliente
-	#conta_cliente: .space 400 .asciiz "XXXXXX"
+	
+	#conta_cliente: .space 400 
+	
+	saldo_cliente: .space 400 
 	
 
 	# MENSAGENS UTILIZADAS NOS MENUS
@@ -31,10 +36,15 @@
 	msg_cpf_request: .asciiz "\nDigite o CPF do cliente: "
 	msg_acc_request: .asciiz "\nDigite o número da conta do cliente: "
 	quebra_de_linha: .asciiz "\n"
-	
+	msg_saque_deposito: .asciiz "Escolha a operação:\n{[1] - Saque\n[2] - Depósito\nDigite a opção desejada: "
 	msg_reg_success: .asciiz "Cliente cadastrado com sucesso. Número da conta: "
-	
+	msg_saque_efetuado: .asciiz "Saque efetuado com sucesso.\n"
+	msg_valor_saque: .asciiz "Digite o valor do saque: "
+	msg_valor_deposito: .asciiz "Digite o valor do depósito: "
+	msg_deposito_efetuado: .asciiz "Depósito efetuado com sucesso.\n"
+	msg_saldo_insuficiente: .asciiz "Saldo insuficiente.\n"
 	cpf_error: .asciiz "Já existe conta neste CPF"
+	msg_saldo: .asciiz "Saldo: "
 	
 	# Macros
 	.macro print_string(%string)
@@ -73,12 +83,16 @@
 			beq $v0, 6, encerrar_conta
 			
 			# desvios de casos inexistentes
-			bgt $v0, 6, invalid_option
+			bgt $v0, 7, invalid_option
 			blt $v0, 1, invalid_option
 			
 			invalid_option:
 				print_string(options_error)
 				j menu
+				
+			cliente_invalido:
+        			print_string(options_error)
+        			j menu
 			
 		cadastrar_clientes:
 		
@@ -111,8 +125,10 @@
 			syscall
 			
 			#jal verificar_cpf
-			
+			   
 			sb $s0, limite_cliente($t2)
+			sb $zero, saldo_cliente($t2)  # Inicializar saldo como zero
+
 			
 			print_string(quebra_de_linha)
 			print_string(msg_reg_success)
@@ -126,7 +142,9 @@
 			
 		pagar_conta:
 		
+		
 		alterar_limite_cliente:
+		
 			# TESTE
 			print_string(request_client)
 			li $v0, 5
@@ -147,6 +165,72 @@
 		extrato:
 		
 		saque_deposito:
+    		print_string(request_client)
+    		li $v0, 5
+    		syscall
+
+    		add $t3, $0, $v0
+    		li $s1, 50
+    		multu $t3, $s1
+    		mflo $t3
+
+    		# TESTE: imprimindo cliente que foi recuperado
+    		li $v0, 4
+    		la $a0, nome_cliente($t3)
+    		syscall
+
+    		print_string(msg_saque_deposito)
+    		li $v0, 5
+    		syscall
+    		move $t7, $v0  # Salvar o valor lido em $t7
+
+    		beq $t7, 1, saque
+    		beq $t7, 2, deposito
+
+    		# Se a opção não for 1 ou 2, exiba uma mensagem de opção inválida
+    		print_string(options_error)
+    		j menu
+
+		saque:
+    		print_string(msg_valor_saque)
+    		li $v0, 5
+    		syscall
+
+    		# Agora, $v0 contém o valor do saque
+    		la $t4, saldo_cliente        # Carregar o endereço base de saldo_cliente
+    		add $t4, $t4, $t3            # Adicionar o deslocamento para obter o endereço específico
+    		andi $t4, $t4, -4  # Máscara para garantir que $t4 seja um múltiplo de 4
+    		lw $t5, 0($t4)               # Carregar o saldo atual do cliente para $t5
+
+    		# Verificar se há saldo suficiente
+    		bge $t5, $v0, saldo_suficiente  # Se o saldo for maior ou igual ao valor do saque, vá para saldo_suficiente
+    		print_string(msg_saldo_insuficiente)  # Se o saldo for menor que o valor do saque, imprima a mensagem de saldo insuficiente
+    		j menu  # Volte para o menu
+
+		saldo_suficiente:
+    		sub $t5, $t5, $v0  # Atualizar saldo (para saque)
+    		sw $t5, 0($t4)  # Salvar saldo atualizado
+    		print_string(msg_saque_efetuado)  # Mensagem de saque efetuado
+    		j menu
+
+		deposito:
+    		print_string(msg_valor_deposito)
+    		li $v0, 5
+    		syscall
+
+    		# Agora, $v0 contém o valor do depósito
+    		sll $t5, $t3, 2              # Multiplicar $t3 por 4 (shift left by 2)
+    		la $t4, saldo_cliente        # Carregar o endereço base de saldo_cliente
+    		add $t4, $t4, $t5            # Adicionar o deslocamento para obter o endereço específico
+    		andi $t4, $t4, -4            # Máscara para garantir que $t4 seja um múltiplo de 4
+    		lw $t5, 0($t4)               # Carregar o saldo atual do cliente para $t5
+
+    		add $t5, $t5, $v0            # Atualizar saldo (para depósito)
+    		sw $t5, 0($t4)               # Salvar saldo atualizado
+
+    		# Mensagem de depósito efetuado
+    		print_string(msg_deposito_efetuado)
+    		j menu
 		
 		encerrar_conta:
 		
