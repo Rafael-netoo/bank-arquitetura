@@ -203,18 +203,18 @@
 		
 		saque_deposito:
     		print_string(client_index)
-    		li $v0, 5
-    		syscall
+    		li $v0, 5 # Carrega o valor 5 no registrador $v0, indicando que a próxima chamada de sistema será para ler um inteiro
+    		syscall # Chama a interrupção do sistema para realizar a leitura do inteiro do usuário.
 
-    		add $t3, $0, $v0
-    		li $s1, 50
-    		multu $t3, $s1
-    		mflo $t3
+    		add $t3, $0, $v0 #  Move o valor lido do registrador $v0 para $t3.
+    		li $s1, 50 # Carrega o valor 50 no registrador $s1.
+    		multu $t3, $s1 # Multiplica o conteúdo dos registradores $t3 e $s1 sem sinal.
+    		mflo $t3 # Move o resultado da multiplicação para $t3.
 
     		# TESTE: imprimindo cliente que foi recuperado
-    		li $v0, 4
-    		la $a0, nome_cliente($t3)
-    		syscall
+    		li $v0, 4 # Carrega o valor 4 no registrador $v0, indicando que a próxima chamada de sistema será para imprimir uma string
+    		la $a0, nome_cliente($t3) # Carrega o endereço da string que representa o nome do cliente, calculado com base no resultado da multiplicação, no registrador $a0
+    		syscall # Chama a interrupção do sistema para imprimir a string do nome do cliente.
 
     		print_string(msg_saque_deposito)
     		li $v0, 5
@@ -278,10 +278,10 @@
     		li $v0, 5
     		syscall
 
-    		add $t3, $0, $v0
-    		li $s1, 50
-    		multu $t3, $s1
-    		mflo $t3
+    		add $t3, $0, $v0 # Move o valor lido para o registrador $t3.
+    		li $s1, 50 # Carrega o valor 50 no registrador de propósito geral $s1
+    		multu $t3, $s1 # Multiplica $t3 por $s1 sem sinal.
+    		mflo $t3 # Move o resultado da multiplicação para $t3.
 
     		# TESTE: imprimindo cliente que foi recuperado
     		li $v0, 4
@@ -312,6 +312,8 @@
 
     		# Verifica se há saldo suficiente
     		blt $t5, $v0, saldo_insuficiente_debito  # Se o saldo for menor que o valor do pagamento, imprime a mensagem de saldo insuficiente
+    		# Verifica se o valor contido no registrador $t5 (saldo atual do cliente) é estritamente menor que o valor contido no registrador $v0.
+    		
     		sub $t5, $t5, $v0  # Atualiza saldo (para débito)
     		sw $t5, 0($t4)  # Salva saldo atualizado
 
@@ -337,7 +339,8 @@
 
     		# Verifica se há limite de crédito suficiente
     		bge $t5, $v0, limite_credito_suficiente  # Se o limite de crédito for maior ou igual ao valor do pagamento, vá para limite_credito_suficiente
-
+		# Verifica se o valor contido no registrador $t5 (limite de crédito atual do cliente) é maior ou igual ao valor contido no registrador $v0.
+		
     		print_string(msg_saldo_limite_insuficiente)  # Se o limite de crédito for menor que o valor do pagamento, imprime a mensagem de saldo insuficiente
     		j menu  # Volta para o menu principal
 
