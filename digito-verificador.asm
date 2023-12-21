@@ -1,6 +1,6 @@
 .data
 
-   msg: .asciiz "Digite o número da sua conta : "
+   msg: .asciiz "\nDigite o número da sua conta : "
    divisor : .word 11
    verificador : .space 2
    verificador_dez: .asciiz "X"
@@ -9,11 +9,13 @@
    string_resultante: .space 6
    
 .text
+   .globl digito_verificador
 
-   main:
+   digito_verificador:
      li $v0, 4
      la $a0, msg
      syscall
+     
    #converter valor da conta para string
    convert_string: 
      
@@ -87,7 +89,7 @@
   concatenacao:
        
        # Aloca espaço para a string resultante
-        la $a0,  string_resultante
+        la $a0, string_resultante
     
         
         # Inicializa registradores
@@ -132,13 +134,18 @@
 
         concat_end:
         # Imprime a string resultante
-        li $v0, 4
-        la $a0,string_resultante
-        syscall
+        #li $v0, 4
+        #la $a0,string_resultante
+        #syscall
+        
+	la $a0, string_resultante
+        move $v0, $a0
+        jr $ra
+
 
         # Termina o programa
-        li $v0, 10
-        syscall
+        #li $v0, 10
+        #syscall
  
          
        

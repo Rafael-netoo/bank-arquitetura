@@ -25,19 +25,20 @@
 	#conta_cliente: .space 400 
 	
 	saldo_cliente: .space 400 
+	conta_cliente: .space 350
 	
 
 	# MENSAGENS UTILIZADAS NOS MENUS
 	options: .asciiz "Selecione operação:\n[1] - Cadastrar Cliente\n[2] - Pagamento de Contas\n[3] - Alterar Limite do Cliente\n[4] - Gerar Extrato\n[5] - Depositar/Sacar\n[6] - Encerrar Conta\n\nDigite a opção desejada: "
 	options_error: .asciiz "\nOpção selecionada inválida! Tente novamente!\n\n"
 	
-	request_client: .asciiz "TESTE: Insira o índice do cliente desejado: "
+	client_index: .asciiz "Insira o índice do cliente desejado: "
 	msg_name_request: .asciiz "\nDigite o nome do cliente: "
 	msg_cpf_request: .asciiz "\nDigite o CPF do cliente: "
 	msg_acc_request: .asciiz "\nDigite o número da conta do cliente: "
 	quebra_de_linha: .asciiz "\n"
 	msg_saque_deposito: .asciiz "Escolha a operação:\n{[1] - Saque\n[2] - Depósito\nDigite a opção desejada: "
-	msg_reg_success: .asciiz "Cliente cadastrado com sucesso. Número da conta: "
+	msg_reg_success: .asciiz "\nCliente cadastrado com sucesso!\n"
 	msg_saque_efetuado: .asciiz "Saque efetuado com sucesso.\n"
 	msg_valor_saque: .asciiz "Digite o valor do saque: "
 	msg_valor_deposito: .asciiz "Digite o valor do depósito: "
@@ -124,6 +125,25 @@
 			li $a1, 12
 			syscall
 			
+			addi $sp, $sp, -16
+			sw $t0, 0($sp)
+			sw $t1, 4($sp)
+			sw $t2, 8($sp)
+			sw $ra, 12($sp)
+			
+		
+			jal digito_verificador
+			move $s0, $v0
+			la $a0, conta_cliente($t2)
+			move $a0, $s0
+			
+			lw $a0, 0($sp)	#Recuperando o $a0 antigo
+			lw $t1, 4($sp)
+			lw $t2, 8($sp)
+			lw $ra, 12($sp)
+			addi $sp, $sp, 16 #voltando a pilha pro lugar original
+			
+			
 			#jal verificar_cpf
 			   
 			sb $s0, limite_cliente($t2)
@@ -146,7 +166,7 @@
 		alterar_limite_cliente:
 		
 			# TESTE
-			print_string(request_client)
+			print_string(client_index)
 			li $v0, 5
 			syscall
 			
@@ -160,12 +180,21 @@
 			la $a0, nome_cliente($t3)
 			syscall
 			
+			add $t3, $0, $v0
+			li $t7, 8
+			multu $t3, $t7
+			mflo $t3
+			
+			li $v0, 4
+			la $a0, conta_cliente($t3)
+			syscall
+			
 			j menu
 			
 		extrato:
 		
 		saque_deposito:
-    		print_string(request_client)
+    		print_string(client_index)
     		li $v0, 5
     		syscall
 
